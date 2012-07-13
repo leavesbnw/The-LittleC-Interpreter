@@ -1,12 +1,13 @@
 #include "interpreter.h"
 
-pointer NIL;
-
 int main()
 {
-        NIL = mk_symbol("nil");
+        init();
         for (;;) {
                 pointer sexpr = read(stdin);
+                printf("*evaluating ");
+                write(stdout, sexpr);
+                printf("\n  ");
                 pointer result = eval(sexpr);
                 write(stdout, result);
                 printf("\n");

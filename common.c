@@ -1,23 +1,32 @@
 #include <stdlib.h>
+#include <string.h>
 #include "interpreter.h"
 
 pointer mk_string(char *string)
 {
-        pointer x = get_cell(NIL, NIL);
-        type(x) = T_STRING | T_ATOM;
+        pointer x = get_cell(NULL, NULL);
+        type(x) = T_STRING;
         str(x) = string;
         return x;
 } 
 pointer mk_number(int number)
 {
-        pointer x = get_cell(NIL, NIL);
-        type(x) = T_NUMBER | T_ATOM;
+        pointer x = get_cell(NULL, NULL);
+        type(x) = T_NUMBER;
         num(x) = number;
+        return x;
+}
+pointer cons_with_flag(pointer car, pointer cdr, int flag)
+{
+        pointer x = get_cell(NULL, NULL);
+        type(x) = flag;
+        car(x) = car;
+        cdr(x) = cdr;
         return x;
 }
 pointer cons(pointer car, pointer cdr)
 {
-        pointer x = get_cell(NIL, NIL);
+        pointer x = get_cell(NULL, NULL);
         type(x) = T_PAIR;
         car(x) = car;
         cdr(x) = cdr;
@@ -25,7 +34,7 @@ pointer cons(pointer car, pointer cdr)
 }
 pointer mk_symbol(char *string)
 {
-        pointer x= cons(mk_string(string), NIL);
+        pointer x= cons(mk_string(string), NULL);
         type(x) = T_SYMBOL;
         return x;
 }
@@ -43,3 +52,26 @@ pointer get_cell(pointer car, pointer cdr)
         return x;
 }
         
+int sym_eq(pointer sym1, pointer sym2)
+{
+        if (strcmp(sym(sym1), sym(sym2)) == 0)
+                return 1;
+        else
+                return 0;
+}
+
+pointer lookup_symbol(pointer sym)
+{
+        pointer iter = env;
+        while (iter != NULL) {
+                if (sym_eq(sym, caar(iter)))
+                        return cdar(iter);
+                iter = cdr(iter);
+        }
+        return iter;
+}
+
+void add_new_binding(char *name, pointer binding)
+{
+        env = cons(cons(mk_symbol(name), binding), env);
+}

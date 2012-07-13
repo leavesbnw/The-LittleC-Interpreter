@@ -23,7 +23,7 @@ static pointer cons_with_symbol(char *string, pointer object);
 pointer _read(port *in)
 {
         pointer token;
-        switch (get_next_token(in, &token) & ~T_ATOM) {
+        switch (get_next_token(in, &token)) {
         case STRING:
         case SYMBOL:
         case NUMBER:
@@ -206,7 +206,7 @@ void write(port *out, pointer object)
                 printf("()");
                 return;
         }
-        switch (type(object) & ~T_ATOM) {
+        switch (type(object)) {
         case T_STRING:
                 write_string(out, object);
                 break;
@@ -219,7 +219,8 @@ void write(port *out, pointer object)
         case T_PAIR:
                 write_pair(out, object);
                 break;
-        case T_PROC:
+        case T_BLTIN_PROC:
+        case T_EXT_PROC:
                 write_proc(out, object);
                 break;
         case T_MACRO:
