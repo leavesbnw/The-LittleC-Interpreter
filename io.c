@@ -219,8 +219,9 @@ void write(port *out, pointer object)
         case T_PAIR:
                 write_pair(out, object);
                 break;
-        case T_BLTIN_PROC:
-        case T_EXT_PROC:
+        case T_BUILT_IN_REGULAR_PROC:
+        case T_BUILT_IN_SPECIAL_PROC:
+        case T_EXTEND_PROC:
                 write_proc(out, object);
                 break;
         case T_MACRO:
@@ -258,6 +259,7 @@ static void write_pair(port *out, pointer object)
                 write(out, car(object));
                 fprintf(out, " . ");
                 write(out, cdr(object));
+                fprintf(out, " ");
         } else
                 while (object != NULL) {
                         write(out, car(object));

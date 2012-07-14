@@ -28,8 +28,9 @@ extern pointer cont;
 #define T_NUMBER 2
 #define T_SYMBOL 4
 #define T_PAIR   8
-#define T_EXT_PROC  32
-#define T_BLTIN_PROC 64
+#define T_EXTEND_PROC  16
+#define T_BUILT_IN_REGULAR_PROC 32
+#define T_BUILT_IN_SPECIAL_PROC 64
 #define T_MACRO 128
 
 #define type(p) ((p)->flag)
@@ -39,15 +40,21 @@ extern pointer cont;
 #define car(p) ((p)->_object._cons.car)
 #define cdr(p) ((p)->_object._cons.cdr)
 #define op_type(p) ((p)->flag)
-#define op_get_bltin_proc_code(p) ((bltin_proc_code_ptr) car(p))
+#define op_get_bltin_proc_name(p) ((char *) car(p))
+#define op_get_bltin_proc_code(p) ((bltin_proc_code_ptr) cdr(p))
+#define op_get_ext_proc_env(p) car(p)
+#define op_get_ext_proc_farg(p) cadr(p)
+#define op_get_ext_proc_body(p) car(cddr(p))
 #define sexpr_get_op(sexpr) car(sexpr)
 #define sexpr_get_arg(sexpr) cdr(sexpr)
+#define lookup_val(pair) cdr(pair)
+#define lookup_key(pair) car(pair)
 
 #define isstring(p) (type(p) & T_STRING)
 #define isnumber(p) (type(p) & T_NUMBER)
 #define issymbol(p) (type(p) & T_SYMBOL)
-#define isextproc(p) (type(p) & T_EXT_PROC)
-#define isbltinproc(p) (type(p) & T_BLTIN_PROC)
+#define isextproc(p) (type(p) & T_EXTEND_PROC)
+#define isbltinproc(p) (type(p) & (T_BUILT_IN_SPECIAL_PROC | T_BUILT_IN_REGULAR_PROC))
 #define ispair(p) (type(p) & T_PAIR)
 #define ismacro(p) (type(p) & T_MACRO)
 #define isatom(p) (isstring(p) || isnumber(p))
@@ -69,7 +76,7 @@ pointer eval(pointer sexpr);
 void init(void);
 int sym_eq(pointer sym1, pointer sym2);
 pointer lookup_symbol(pointer sym);
-void add_new_binding(char *name, pointer binding);
+void add_new_binding(pointer symbol, pointer binding);
 //char *store_string(const char *string);
 
 #define MAX_SYM_NUM_LEN 255
@@ -79,6 +86,6 @@ void add_new_binding(char *name, pointer binding);
 typedef FILE port;
 pointer read(port *out);
 void write(port *out, pointer object);
-
+void dbg_print(pointer obj);
 
 #endif

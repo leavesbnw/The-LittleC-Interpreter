@@ -65,13 +65,20 @@ pointer lookup_symbol(pointer sym)
         pointer iter = env;
         while (iter != NULL) {
                 if (sym_eq(sym, caar(iter)))
-                        return cdar(iter);
+                        return car(iter);
                 iter = cdr(iter);
         }
         return iter;
 }
 
-void add_new_binding(char *name, pointer binding)
+void add_new_binding(pointer symbol, pointer binding)
 {
-        env = cons(cons(mk_symbol(name), binding), env);
+        env = cons(cons(symbol, binding), env);
+}
+
+void dbg_print(pointer obj)
+{
+        printf("\n DEBUG: ");
+        write(stdout, obj);
+        printf("\n");
 }

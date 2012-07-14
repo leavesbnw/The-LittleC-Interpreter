@@ -11,27 +11,46 @@ static pointer _add(void) {return mk_number(num(first(arg)) + num(second(arg)));
 static pointer _sub(void) {return mk_number(num(first(arg)) - num(second(arg)));}
 static pointer _mul(void) {return mk_number(num(first(arg)) * num(second(arg)));}
 static pointer _div(void) {return mk_number(num(first(arg)) / num(second(arg)));}
-static pointer _gt(void)  {return num(first(arg)) > num(second(arg)) ? T : F;}
-static pointer _lt(void)  {return num(first(arg)) < num(second(arg)) ? T : F;}
+static pointer _gt(void) {return num(first(arg)) > num(second(arg)) ? T : F;}
+static pointer _lt(void) {return num(first(arg)) < num(second(arg)) ? T : F;}
 static pointer _gte(void) {return num(first(arg)) >= num(second(arg)) ? T : F;}
 static pointer _lte(void) {return num(first(arg)) <= num(second(arg)) ? T : F;}
-static pointer _eq(void)  {return num(first(arg)) == num(second(arg)) ? T : F;}
-static pointer _stringp(void)    {return isstring(first(arg)) ? T : F;}
-static pointer _numberp(void)    {return isnumber(first(arg)) ? T : F;}
-static pointer _symbolp(void)    {return issymbol(first(arg)) ? T : F;}
-static pointer _extprocp(void)   {return isextproc(first(arg)) ? T : F;}
+static pointer _eq(void) {return num(first(arg)) == num(second(arg)) ? T : F;}
+static pointer _stringp(void) {return isstring(first(arg)) ? T : F;}
+static pointer _numberp(void) {return isnumber(first(arg)) ? T : F;}
+static pointer _symbolp(void) {return issymbol(first(arg)) ? T : F;}
+static pointer _extprocp(void) {return isextproc(first(arg)) ? T : F;}
 static pointer _bltinprocp(void) {return isbltinproc(first(arg)) ? T : F;}
-static pointer _pairp(void)  {return ispair(first(arg)) ? T : F;}
+static pointer _pairp(void) {return ispair(first(arg)) ? T : F;}
 static pointer _macrop(void) {return ismacro(first(arg)) ? T : F;}
-static pointer _atomp(void)  {return isatom(first(arg)) ? T : F;}
-static pointer _and(void)    {return first(arg) != F && second(arg) != F ? T : F;}
-static pointer _or(void)     {return first(arg) != F || second(arg) != F ? T : F;}
-static pointer _not(void)    {return first(arg) != F ? F : T;}
+static pointer _atomp(void) {return isatom(first(arg)) ? T : F;}
+static pointer _nullp(void) {return first(arg) == NULL ? T : F;}
+static pointer _and(void) {return first(arg) != F && second(arg) != F ? T : F;}
+static pointer _or(void) {return first(arg) != F || second(arg) != F ? T : F;}
+static pointer _not(void) {return first(arg) != F ? F : T;}
+static pointer _car(void) {return car(first(arg));}
+static pointer _cdr(void) {return cdr(first(arg));}
+static pointer _cons(void) {return cons(first(arg), second(arg));}
+static pointer _if(void) {return eval(first(arg)) != F ? eval(second(arg)) : eval(third(arg));}
+static pointer _quote(void) {return first(arg);}
+static pointer _lambda(void) {return cons_with_flag(env, arg, T_EXTEND_PROC);}
+static pointer _set(void) {
+        pointer symbol = first(arg);
+        pointer value = eval(second(arg));
+        pointer tmp = lookup_symbol(symbol);
+        if (tmp != NULL)
+                lookup_val(tmp) = value;
+        else
+                add_new_binding(symbol, value);
+        return value;
+}
+
+        
 
 
-static void register_bltin_proc(char *name, bltin_proc_code_ptr proc)
+static void register_bltin_proc(char *name, bltin_proc_code_ptr proc, int flag)
 {
-        add_new_binding(name, cons_with_flag((pointer) proc, NULL, T_BLTIN_PROC));
+        add_new_binding(mk_symbol(name), cons_with_flag((pointer) name, (pointer) proc, flag));
 }
 
 void init()
@@ -40,24 +59,35 @@ void init()
         T = mk_symbol("#t");
 
         env = arg = op = cont = NULL;
-        register_bltin_proc("+", _add);
-        register_bltin_proc("-", _sub);
-        register_bltin_proc("*", _mul);
-        register_bltin_proc("/", _div);
-        register_bltin_proc(">", _gt);
-        register_bltin_proc(">=", _gte);
-        register_bltin_proc("<", _lt);
-        register_bltin_proc("<=", _lte);
-        register_bltin_proc("=", _eq);
-        register_bltin_proc("string?", _stringp);
-        register_bltin_proc("number?", _numberp);
-        register_bltin_proc("symbol?", _symbolp);
-        register_bltin_proc("extproc?", _extprocp);
-        register_bltin_proc("bltinproc?", _bltinprocp);
-        register_bltin_proc("pair?", _pairp);
-        register_bltin_proc("macro?", _macrop);
-        register_bltin_proc("atom?", _atomp);
-        register_bltin_proc("and", _and);
-        register_bltin_proc("or", _or);
-        register_bltin_proc("not", _not);        
+        register_bltin_proc("+", _add, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("-", _sub, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("*", _mul, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("/", _div, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc(">", _gt, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc(">=", _gte, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("<", _lt, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("<=", _lte, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("=", _eq, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("string?", _stringp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("number?", _numberp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("symbol?", _symbolp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("extproc?", _extprocp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("bltinproc?", _bltinprocp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("pair?", _pairp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("macro?", _macrop, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("atom?", _atomp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("null?", _nullp, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("and", _and, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("or", _or, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("not", _not, T_BUILT_IN_REGULAR_PROC);        
+        register_bltin_proc("car", _car, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("cdr", _cdr, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("cons", _cons, T_BUILT_IN_REGULAR_PROC);
+
+        register_bltin_proc("if", _if, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("quote", _quote, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("lambda", _lambda, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("set!", _set, T_BUILT_IN_SPECIAL_PROC);
+
+
 }

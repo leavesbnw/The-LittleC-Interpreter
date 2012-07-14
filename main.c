@@ -7,7 +7,7 @@ int main()
                 pointer sexpr = read(stdin);
                 printf("*evaluating ");
                 write(stdout, sexpr);
-                printf("\n  ");
+                printf("\n   ");
                 pointer result = eval(sexpr);
                 write(stdout, result);
                 printf("\n");
