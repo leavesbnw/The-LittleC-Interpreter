@@ -247,7 +247,7 @@ static void write_symbol(port *out, pointer object)
         fprintf(out, "%s", sym(object));
 }
 static void write_pair(port *out, pointer object)
-{
+{        
         fprintf(out, "(");
         if (cdr(object) == NULL) {
                 write(out, car(object));
@@ -262,9 +262,16 @@ static void write_pair(port *out, pointer object)
                 fprintf(out, " ");
         } else
                 while (object != NULL) {
+                        if (!ispair(object)) {
+                                fprintf(out, ". ");
+                                write(out, object);
+                                fprintf(out, " ");
+                                break;
+                        }
                         write(out, car(object));
                         fprintf(out, " ");
                         object = cdr(object);
+
                 }
         fprintf(out, "\b)");
 }

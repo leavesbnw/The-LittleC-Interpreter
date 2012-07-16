@@ -34,19 +34,47 @@ static pointer _cons(void) {return cons(first(arg), second(arg));}
 static pointer _if(void) {return eval(first(arg)) != F ? eval(second(arg)) : eval(third(arg));}
 static pointer _quote(void) {return first(arg);}
 static pointer _lambda(void) {return cons_with_flag(env, arg, T_EXTEND_PROC);}
-static pointer _set(void) {
+static pointer _defmacro(void){return add_new_binding(first(arg), cons_with_flag(env, cdr(arg), T_MACRO));}
+static pointer __backquote(pointer args);
+static pointer _backquote(void) {return __backquote(first(arg));}
+static pointer _set(void) 
+{
         pointer symbol = first(arg);
-        pointer value = eval(second(arg));
         pointer tmp = lookup_symbol(symbol);
         if (tmp != NULL)
-                lookup_val(tmp) = value;
-        else
-                add_new_binding(symbol, value);
-        return value;
+                return lookup_val(tmp) = eval(second(arg));
+        else {
+                add_new_binding(symbol, 0);
+                return lookup_val(lookup_symbol(symbol)) = eval(second(arg));
+        }
 }
 
-        
+static pointer _expand_macro(void)
+{
+        arg = first(arg);
+        op = lookup_val(lookup_symbol(first(arg)));
+        arg = cdr(arg);
+        env = op_get_macro_env(op);
+        pointer farg = op_get_macro_farg(op);
+        while (farg != NULL) {
+                add_new_binding(car(farg), car(arg));
+                farg = cdr(farg);
+                arg = cdr(arg);
+        }
+        return eval(op_get_macro_body(op));
+}
 
+static pointer _progn(void)
+{
+        pointer result, tmp = arg;
+
+        
+        while (tmp != NULL) {
+                result = eval(first(tmp));
+                tmp = cdr(tmp);
+        }
+        return result;
+}
 
 static void register_bltin_proc(char *name, bltin_proc_code_ptr proc, int flag)
 {
@@ -87,7 +115,27 @@ void init()
         register_bltin_proc("if", _if, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("quote", _quote, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("lambda", _lambda, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("defmacro", _defmacro, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("backquote", _backquote, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("set!", _set, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("expand-macro", _expand_macro, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("progn", _progn, T_BUILT_IN_SPECIAL_PROC);
+
+}
 
 
+
+static pointer __backquote(pointer args)
+{
+        if (args == NULL)
+                return NULL;
+
+        if (type(args) == T_PAIR) {
+                if (issymbol(car(args)) &&
+                    sym_eq(car(args), mk_symbol("unquote")))
+                        return eval(cadr(args));
+        } else
+                return args;
+
+        return cons(__backquote(car(args)), __backquote(cdr(args)));
 }

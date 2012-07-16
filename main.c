@@ -10,7 +10,7 @@ int main()
                 printf("\n   ");
                 pointer result = eval(sexpr);
                 write(stdout, result);
-                printf("\n");
+                printf("\n\n");
         }
         return 0;
 }

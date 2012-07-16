@@ -71,9 +71,10 @@ pointer lookup_symbol(pointer sym)
         return iter;
 }
 
-void add_new_binding(pointer symbol, pointer binding)
+pointer add_new_binding(pointer symbol, pointer binding)
 {
         env = cons(cons(symbol, binding), env);
+        return binding;
 }
 
 void dbg_print(pointer obj)

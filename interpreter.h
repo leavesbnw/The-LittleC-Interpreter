@@ -45,6 +45,9 @@ extern pointer cont;
 #define op_get_ext_proc_env(p) car(p)
 #define op_get_ext_proc_farg(p) cadr(p)
 #define op_get_ext_proc_body(p) car(cddr(p))
+#define op_get_macro_env(p) car(p)
+#define op_get_macro_farg(p) cadr(p)
+#define op_get_macro_body(p) car(cddr(p))
 #define sexpr_get_op(sexpr) car(sexpr)
 #define sexpr_get_arg(sexpr) cdr(sexpr)
 #define lookup_val(pair) cdr(pair)
@@ -76,7 +79,7 @@ pointer eval(pointer sexpr);
 void init(void);
 int sym_eq(pointer sym1, pointer sym2);
 pointer lookup_symbol(pointer sym);
-void add_new_binding(pointer symbol, pointer binding);
+pointer add_new_binding(pointer symbol, pointer binding);
 //char *store_string(const char *string);
 
 #define MAX_SYM_NUM_LEN 255

@@ -1,2 +1,4 @@
-(set! inc (lambda (x) (+ x 1)))
-(inc 22)
+(progn
+ (set! a 1)
+ (+ a 1))
+
