@@ -2,6 +2,15 @@
 #include <string.h>
 #include "interpreter.h"
 
+pointer append(pointer list1, pointer list2)
+{
+        if (list1 == NULL)
+                return list2;
+
+        return cons(car(list1), append(cdr(list1), list2));
+}
+
+
 pointer mk_string(char *string)
 {
         pointer x = get_cell(NULL, NULL);

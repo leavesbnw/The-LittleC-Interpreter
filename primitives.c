@@ -31,6 +31,7 @@ static pointer _not(void) {return first(arg) != F ? F : T;}
 static pointer _car(void) {return car(first(arg));}
 static pointer _cdr(void) {return cdr(first(arg));}
 static pointer _cons(void) {return cons(first(arg), second(arg));}
+static pointer _append(void) {return append(first(arg), second(arg));}
 static pointer _if(void) {return eval(first(arg)) != F ? eval(second(arg)) : eval(third(arg));}
 static pointer _quote(void) {return first(arg);}
 static pointer _lambda(void) {return cons_with_flag(env, arg, T_EXTEND_PROC);}
@@ -111,6 +112,7 @@ void init()
         register_bltin_proc("car", _car, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("cdr", _cdr, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("cons", _cons, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("append", _append, T_BUILT_IN_REGULAR_PROC);
 
         register_bltin_proc("if", _if, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("quote", _quote, T_BUILT_IN_SPECIAL_PROC);
@@ -124,18 +126,53 @@ void init()
 }
 
 
-
+/* really ugly! */
 static pointer __backquote(pointer args)
 {
         if (args == NULL)
                 return NULL;
-
-        if (type(args) == T_PAIR) {
-                if (issymbol(car(args)) &&
-                    sym_eq(car(args), mk_symbol("unquote")))
-                        return eval(cadr(args));
-        } else
+        if (type(args) != T_PAIR)
                 return args;
+        pointer next, val;
+        if (cdr(args) != NULL && type(cadr(args)) == T_PAIR) {
+                next = caar(cdr(args));
+                if (issymbol(next) && sym_eq(next, mk_symbol("splice"))) {
+                        val = __backquote(cons(car(args), NULL));
+                        if (!ispair(val))
+                                return cons(val, __backquote(cdr(args)));
+                        else
+                                return append(val, __backquote(cdr(args)));
 
+                }
+        }
+        pointer cur = car(args);
+        if (type(cur) == T_PAIR && issymbol(car(cur))) {
+                if (sym_eq(car(cur), mk_symbol("unquote")))
+                        return cons(eval(cadr(cur)), __backquote(cdr(args)));
+                else if (sym_eq(car(cur), mk_symbol("splice")))  {
+                        val = eval(cadr(cur));
+                        if (!ispair(val))
+                                return val;
+                        else
+                                return append(val, __backquote(cdr(args)));
+                }
+        }
+        
         return cons(__backquote(car(args)), __backquote(cdr(args)));
+        
+        /* if (args == NULL) */
+        /*         return NULL; */
+
+        /* if (type(args) == T_PAIR) { */
+        /*         if (issymbol(car(args))) { */
+        /*                 if (sym_eq(car(args), mk_symbol("unquote"))) */
+        /*                         return eval(cadr(args)); */
+        /*                 if (sym_eq(car(args), mk_symbol("splice"))) { */
+        /*                         pointer val = eval(cadr(args)); */
+                                
+                                
+        /*         } */
+        /* } else */
+        /*         return args; */
+        /* return cons(__backquote(car(args)), __backquote(cdr(args))); */
 }

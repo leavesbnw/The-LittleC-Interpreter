@@ -80,6 +80,7 @@ void init(void);
 int sym_eq(pointer sym1, pointer sym2);
 pointer lookup_symbol(pointer sym);
 pointer add_new_binding(pointer symbol, pointer binding);
+pointer append(pointer list1, pointer list2);
 //char *store_string(const char *string);
 
 #define MAX_SYM_NUM_LEN 255

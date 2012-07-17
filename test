@@ -1,3 +1,10 @@
+`(,@'(2) ,@1)
+`(1 ,@'(3))
+
+(define (append list1 list2)
+  (if (null? list1)
+      list2
+      (cons (car list1) (append (cdr list1) list2))))
 (progn
  (set! a 1)
  (+ a 1))
