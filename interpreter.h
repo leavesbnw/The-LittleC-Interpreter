@@ -24,6 +24,8 @@ extern pointer env;
 extern pointer arg;
 extern pointer op;
 extern pointer cont;
+extern pointer E_O_F;
+
 #define T_STRING 1
 #define T_NUMBER 2
 #define T_SYMBOL 4

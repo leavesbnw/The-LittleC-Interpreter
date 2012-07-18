@@ -1,11 +1,12 @@
-`(,@'(2) ,@1)
-`(1 ,@'(3))
+(define (length list)
+  (if (null? list)
+      0
+      (+ 1 (length (cdr list)))))
 
-(define (append list1 list2)
-  (if (null? list1)
-      list2
-      (cons (car list1) (append (cdr list1) list2))))
-(progn
- (set! a 1)
- (+ a 1))
+(defmacro add (.x)
+  (if (null? x)
+      `0
+      `(+ ,(eval (car x)) (add ,@(cdr x))))))
+
+
 

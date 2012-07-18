@@ -15,7 +15,16 @@
 	 (cons (car (car vlist)) (get-var-list (cdr vlist)))))
    `((lambda ,(get-var-list var-val-list) ,body) ,@(get-val-list var-val-list))))
 
-(let ((a 1) (b 2)) (+ a b))
+(defmacro cond (.conds)
+  (if (null? conds)
+      0
+      `(let ((else #t))
+	 (if ,(car (car conds))
+	     ,(car (cdr (car conds)))
+	     (cond ,@(cdr conds))))))
+
+	   
+      
 
 
 

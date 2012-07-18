@@ -22,8 +22,6 @@ pointer eval(pointer sexpr)
         case T_BUILT_IN_SPECIAL_PROC:
                 return sexpr;
         case T_SYMBOL:
-//                dbg_print(sexpr);
-//                dbg_print(env);
                 return lookup_val(lookup_symbol(sexpr));
         case T_PAIR:
                 return apply(sexpr);
@@ -74,6 +72,10 @@ static pointer apply(pointer expr)
                 env = op_get_ext_proc_env(op);
                 farg = op_get_ext_proc_farg(op);
                 while (farg != NULL) {
+                        if (ispair(car(farg))) {
+                                add_new_binding(car(cdar(farg)), arg);
+                                break;
+                        }
                         add_new_binding(car(farg), car(arg));
                         farg = cdr(farg);
                         arg = cdr(arg);
@@ -85,9 +87,14 @@ static pointer apply(pointer expr)
                 save_continuation(cont_env | cont_arg | cont_op);
                 op = tmp_op;
                 arg = sexpr_get_arg(expr);
+
                 env = op_get_macro_env(op);
                 farg = op_get_macro_farg(op);
                 while (farg != NULL) {
+                        if (ispair(car(farg))) {
+                                add_new_binding(car(cdar(farg)), arg);
+                                break;
+                        }
                         add_new_binding(car(farg), car(arg));
                         farg = cdr(farg);
                         arg = cdr(arg);

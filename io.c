@@ -4,7 +4,7 @@
 #include <string.h>
 #include "interpreter.h"
 
-enum TOK_T {LIST_START, LIST_END, STRING, SYMBOL, NUMBER, QUOTE, BACKQUOTE, UNQUOTE, SPLICE};
+enum TOK_T {LIST_START, LIST_END, STRING, SYMBOL, NUMBER, QUOTE, BACKQUOTE, UNQUOTE, SPLICE, DOT, FILE_END};
 
 
 static int pair_count;
@@ -24,6 +24,8 @@ pointer _read(port *in)
 {
         pointer token;
         switch (get_next_token(in, &token)) {
+        case FILE_END:
+                return E_O_F;
         case STRING:
         case SYMBOL:
         case NUMBER:
@@ -41,6 +43,8 @@ pointer _read(port *in)
                 return cons_with_symbol("unquote", cons(_read(in), NULL));
         case SPLICE:
                 return cons_with_symbol("splice", cons(_read(in), NULL));
+        case DOT:
+                return cons_with_symbol("dot", cons(_read(in), NULL));
         default:
                 printf("Unknown token %s\n", str(token));
                 exit(1);
@@ -91,7 +95,7 @@ static enum TOK_T get_next_token(port *in, pointer *token)
         skip_white_spc(in);
         switch (ch = get_next_char(in)) {
         case EOF:
-                exit(1);
+                return FILE_END;
         case '(':
                 return LIST_START;
         case ')':
@@ -110,6 +114,8 @@ static enum TOK_T get_next_token(port *in, pointer *token)
                         push_back_char(in, ch);
                         return UNQUOTE;
                 }
+        case '.':
+                return DOT;
         default:
                 push_back_char(in, ch);
                 t = get_char_until_delim(in);

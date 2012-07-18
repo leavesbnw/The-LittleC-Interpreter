@@ -1,11 +1,13 @@
 #include "interpreter.h"
+#include <string.h>
 
-#define first(list) car(list)
-#define second(list) cadr(list)
-#define third(list) car(cddr(list))
+#define first(list) ((list) == NULL ? NULL : car(list))
+#define second(list) (cdr(list) == NULL ? NULL : car(cdr(list)))
+#define third(list) (cddr(list) == NULL ? NULL : car(cddr(list)))
 
 pointer F;
 pointer T;
+pointer E_O_F;
 
 static pointer _add(void) {return mk_number(num(first(arg)) + num(second(arg)));}
 static pointer _sub(void) {return mk_number(num(first(arg)) - num(second(arg)));}
@@ -31,6 +33,7 @@ static pointer _not(void) {return first(arg) != F ? F : T;}
 static pointer _car(void) {return car(first(arg));}
 static pointer _cdr(void) {return cdr(first(arg));}
 static pointer _cons(void) {return cons(first(arg), second(arg));}
+
 static pointer _append(void) {return append(first(arg), second(arg));}
 static pointer _if(void) {return eval(first(arg)) != F ? eval(second(arg)) : eval(third(arg));}
 static pointer _quote(void) {return first(arg);}
@@ -58,10 +61,15 @@ static pointer _expand_macro(void)
         env = op_get_macro_env(op);
         pointer farg = op_get_macro_farg(op);
         while (farg != NULL) {
+                if (ispair(car(farg))) {
+                        add_new_binding(car(cdar(farg)), arg);
+                        break;
+                }
                 add_new_binding(car(farg), car(arg));
                 farg = cdr(farg);
                 arg = cdr(arg);
         }
+
         return eval(op_get_macro_body(op));
 }
 
@@ -77,6 +85,36 @@ static pointer _progn(void)
         return result;
 }
 
+static pointer _eval(void)
+{
+        return eval(first(arg));
+}
+
+static pointer _eq_(void)
+{
+        switch(type(first(arg))) {
+        case T_NUMBER:
+                return num(first(arg)) == num(second(arg)) ? T : F;
+        case T_SYMBOL:
+                return sym_eq(first(arg), second(arg)) == 1 ? T : F;
+        case T_STRING:
+                return strcmp(str(first(arg)), str(second(arg))) == 0 ? T : F;
+        }
+        return F;
+}
+        
+static pointer _set_car(void) 
+{
+        pointer obj = eval(first(arg));
+        car(obj) = eval(second(arg));
+        return obj;
+}
+static pointer _set_cdr(void) 
+{
+        pointer obj = eval(first(arg));
+        cdr(obj) = eval(second(arg));
+        return obj;
+}
 static void register_bltin_proc(char *name, bltin_proc_code_ptr proc, int flag)
 {
         add_new_binding(mk_symbol(name), cons_with_flag((pointer) name, (pointer) proc, flag));
@@ -84,10 +122,15 @@ static void register_bltin_proc(char *name, bltin_proc_code_ptr proc, int flag)
 
 void init()
 {
+        
         F = mk_symbol("#f");
         T = mk_symbol("#t");
+        E_O_F = mk_symbol("end of file");
 
         env = arg = op = cont = NULL;
+        add_new_binding(T, T);
+        add_new_binding(F, F);
+
         register_bltin_proc("+", _add, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("-", _sub, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("*", _mul, T_BUILT_IN_REGULAR_PROC);
@@ -113,6 +156,7 @@ void init()
         register_bltin_proc("cdr", _cdr, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("cons", _cons, T_BUILT_IN_REGULAR_PROC);
         register_bltin_proc("append", _append, T_BUILT_IN_REGULAR_PROC);
+        register_bltin_proc("eq?", _eq_, T_BUILT_IN_REGULAR_PROC);
 
         register_bltin_proc("if", _if, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("quote", _quote, T_BUILT_IN_SPECIAL_PROC);
@@ -122,7 +166,9 @@ void init()
         register_bltin_proc("set!", _set, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("expand-macro", _expand_macro, T_BUILT_IN_SPECIAL_PROC);
         register_bltin_proc("progn", _progn, T_BUILT_IN_SPECIAL_PROC);
-
+        register_bltin_proc("eval", _eval, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("set-car!", _set_car, T_BUILT_IN_SPECIAL_PROC);
+        register_bltin_proc("set-cdr!", _set_cdr, T_BUILT_IN_SPECIAL_PROC);
 }
 
 
@@ -145,12 +191,16 @@ static pointer __backquote(pointer args)
 
                 }
         }
+
         pointer cur = car(args);
         if (type(cur) == T_PAIR && issymbol(car(cur))) {
                 if (sym_eq(car(cur), mk_symbol("unquote")))
                         return cons(eval(cadr(cur)), __backquote(cdr(args)));
                 else if (sym_eq(car(cur), mk_symbol("splice")))  {
+                        
                         val = eval(cadr(cur));
+                        if (val == NULL)
+                                return val;
                         if (!ispair(val))
                                 return val;
                         else
@@ -160,19 +210,4 @@ static pointer __backquote(pointer args)
         
         return cons(__backquote(car(args)), __backquote(cdr(args)));
         
-        /* if (args == NULL) */
-        /*         return NULL; */
-
-        /* if (type(args) == T_PAIR) { */
-        /*         if (issymbol(car(args))) { */
-        /*                 if (sym_eq(car(args), mk_symbol("unquote"))) */
-        /*                         return eval(cadr(args)); */
-        /*                 if (sym_eq(car(args), mk_symbol("splice"))) { */
-        /*                         pointer val = eval(cadr(args)); */
-                                
-                                
-        /*         } */
-        /* } else */
-        /*         return args; */
-        /* return cons(__backquote(car(args)), __backquote(cdr(args))); */
 }
